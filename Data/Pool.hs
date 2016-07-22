@@ -31,6 +31,8 @@ module Data.Pool
     (
       Pool(idleTime, maxResources, numStripes)
     , LocalPool
+    , numPoolInUse
+    , numLocalInUse
     , createPool
     , withResource
     , takeResource
@@ -121,6 +123,16 @@ instance Show (Pool a) where
     show Pool{..} = "Pool {numStripes = " ++ show numStripes ++ ", " ++
                     "idleTime = " ++ show idleTime ++ ", " ++
                     "maxResources = " ++ show maxResources ++ "}"
+
+-- | Gets the number of resources in use for a LocalPool.
+numLocalInUse :: LocalPool a -> IO Int
+numLocalInUse = readTVarIO . inUse
+
+-- | Gets the number of resources in use for each stripe in a Pool.
+numPoolInUse :: Pool a -> IO [Int]
+numPoolInUse p = do
+    let lps = V.toList $ localPools p
+    mapM numLocalInUse lps
 
 -- | Create a striped resource pool.
 --
